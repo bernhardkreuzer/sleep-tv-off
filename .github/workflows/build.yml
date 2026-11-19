@@ -4,6 +4,9 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,11 +25,27 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon :mobile:assembleDebug :wear:assembleDebug
 
-      - name: APKs bereitstellen
+      - name: APKs benennen
+        run: |
+          mkdir -p dist
+          cp mobile/build/outputs/apk/debug/mobile-debug.apk dist/TV-Schlaf-Aus-Handy.apk
+          cp wear/build/outputs/apk/debug/wear-debug.apk dist/TV-Schlaf-Aus-Watch.apk
+
+      - name: APKs als Artefakt bereitstellen
         uses: actions/upload-artifact@v4
         with:
           name: SleepTvOff-APKs
-          path: |
-            mobile/build/outputs/apk/debug/mobile-debug.apk
-            wear/build/outputs/apk/debug/wear-debug.apk
+          path: dist/*.apk
           if-no-files-found: error
+
+      # Unter "Releases" liegen die APKs als einzelne Dateien zum direkten Download.
+      - name: Release "latest" aktualisieren
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest dist/*.apk \
+            --title "Aktueller Build" \
+            --notes "Automatisch gebaut aus Commit ${GITHUB_SHA::7}." \
+            --target "$GITHUB_SHA" \
+            --prerelease
