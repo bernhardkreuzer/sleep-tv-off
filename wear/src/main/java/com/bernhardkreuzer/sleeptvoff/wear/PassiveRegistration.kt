@@ -4,7 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.health.services.client.HealthServices
-import androidx.health.services.client.PassiveListenerConfig
+import androidx.health.services.client.data.PassiveListenerConfig
 import androidx.health.services.client.data.UserActivityState
 import java.util.concurrent.TimeUnit
 

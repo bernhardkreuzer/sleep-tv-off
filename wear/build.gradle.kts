@@ -45,7 +45,8 @@ android {
 
 dependencies {
     implementation("androidx.health:health-services-client:1.0.0")
-    implementation("androidx.concurrent:concurrent-futures:1.2.0")
+    // Health Services liefert ListenableFuture zurück, die Klasse kommt aus Guava.
+    implementation("com.google.guava:guava:33.3.1-android")
     implementation("androidx.work:work-runtime:2.9.1")
     implementation("com.google.android.gms:play-services-wearable:18.2.0")
 }
