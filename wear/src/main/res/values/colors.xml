@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tinte als Grund, Limette als Akzent, Violett für Status -->
+    <color name="night">#0A0B10</color>
+    <color name="surface">#14151D</color>
+    <color name="surface2">#1F2130</color>
+    <color name="input">#0E0F16</color>
+    <color name="outline">#2B2E42</color>
+    <color name="outline_strong">#3D4160</color>
+    <color name="text">#F5F6FA</color>
+    <color name="text_soft">#C8CBDD</color>
+    <color name="muted">#9A9FB8</color>
+    <color name="accent">#C8FF4D</color>
+    <color name="accent_track">#A9DB35</color>
+    <color name="on_accent_muted">#2F3A12</color>
+    <color name="accent2">#9B8CFF</color>
+    <color name="accent2_container">#241F4D</color>
+    <color name="on_accent2_muted">#1D1A3A</color>
+</resources>
