@@ -23,7 +23,7 @@ jobs:
       - name: Handy- und Watch-App bauen
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon :mobile:assembleDebug :wear:assembleDebug
+          ./gradlew --no-daemon :mobile:testDebugUnitTest :mobile:assembleDebug :wear:assembleDebug
 
       - name: APKs benennen
         run: |

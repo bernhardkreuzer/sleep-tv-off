@@ -10,11 +10,13 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
+    <!-- usesCleartextTraffic: Die Gerätebeschreibung des Fernsehers gibt es nur per HTTP im WLAN. -->
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/Theme.SleepTvOff">
+        android:theme="@style/Theme.SleepTvOff"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"

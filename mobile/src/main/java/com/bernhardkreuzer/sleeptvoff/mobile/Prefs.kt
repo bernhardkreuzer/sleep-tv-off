@@ -2,6 +2,7 @@ package com.bernhardkreuzer.sleeptvoff.mobile
 
 import android.content.Context
 import android.content.SharedPreferences
+import java.security.SecureRandom
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -10,6 +11,8 @@ import java.util.Locale
 object Prefs {
     private const val FILE = "sleeptvoff"
     private const val MAX_LOG_LINES = 40
+    private const val HOUR_MS = 3_600_000L
+    private const val DAY_MS = 24 * HOUR_MS
     const val DEFAULT_DELAY_MIN = 5
 
     fun sp(context: Context): SharedPreferences =
@@ -36,20 +39,71 @@ object Prefs {
         if (value == tvIp(context)) return
         sp(context).edit()
             .putString("tvIp", value)
-            .putString("tvToken", "")
-            .putBoolean("tvPaired", false)
+            .remove("tvClientId")
+            .remove("tvUsername")
+            .remove("tvAccessToken")
+            .remove("tvRefreshToken")
+            .remove("tvAccessExpiresAt")
+            .remove("tvRefreshExpiresAt")
             .apply()
     }
 
-    fun tvToken(context: Context): String = sp(context).getString("tvToken", null) ?: ""
+    // --- Kopplung mit dem Fernseher ------------------------------------------
 
-    fun tvPaired(context: Context): Boolean = sp(context).getBoolean("tvPaired", false)
+    /** Was die App braucht, um sich später ohne PIN wieder anzumelden. */
+    class TvSession(
+        val clientId: String,
+        val username: String,
+        val accessToken: String,
+        val refreshToken: String,
+        val accessExpiresAt: Long,
+        val refreshExpiresAt: Long
+    )
 
-    fun setPairing(context: Context, token: String?) {
+    fun tvSession(context: Context): TvSession? {
+        val prefs = sp(context)
+        val clientId = prefs.getString("tvClientId", null)
+        val username = prefs.getString("tvUsername", null)
+        val accessToken = prefs.getString("tvAccessToken", null)
+        if (clientId.isNullOrEmpty() || username.isNullOrEmpty() || accessToken.isNullOrEmpty()) return null
+        return TvSession(
+            clientId,
+            username,
+            accessToken,
+            prefs.getString("tvRefreshToken", null) ?: "",
+            prefs.getLong("tvAccessExpiresAt", 0L),
+            prefs.getLong("tvRefreshExpiresAt", 0L)
+        )
+    }
+
+    fun setTvSession(context: Context, clientId: String, username: String, tokens: VidaaClient.Tokens) {
+        val now = System.currentTimeMillis()
+        // Eine Stunde Sicherheitsabstand, falls die Uhren leicht abweichen.
         sp(context).edit()
-            .putString("tvToken", token ?: "")
-            .putBoolean("tvPaired", true)
-            .apply()
+            .putString("tvClientId", clientId)
+            .putString("tvUsername", username)
+            .putString("tvAccessToken", tokens.accessToken)
+            .putString("tvRefreshToken", tokens.refreshToken)
+            .putLong("tvAccessExpiresAt", now + tokens.accessDays * DAY_MS - HOUR_MS)
+            .putLong("tvRefreshExpiresAt", now + tokens.refreshDays * DAY_MS - HOUR_MS)
+            .commit()
+    }
+
+    fun tvPaired(context: Context): Boolean = tvSession(context) != null
+
+    /**
+     * Eigene Geräte-ID im Format einer MAC-Adresse, einmal zufällig erzeugt.
+     * Wird nur verwendet, wenn der Fernseher seine eigene MAC-Adresse nicht verrät.
+     */
+    fun clientUuid(context: Context): String {
+        sp(context).getString("clientUuid", null)?.let { return it }
+        val bytes = ByteArray(6)
+        SecureRandom().nextBytes(bytes)
+        // Als "lokal vergebene" Adresse kennzeichnen, damit sie mit keinem echten Gerät kollidiert.
+        bytes[0] = ((bytes[0].toInt() and 0xFC) or 0x02).toByte()
+        val uuid = bytes.joinToString(":") { "%02x".format(it) }
+        sp(context).edit().putString("clientUuid", uuid).apply()
+        return uuid
     }
 
     // --- Laufzeitzustand ---------------------------------------------------

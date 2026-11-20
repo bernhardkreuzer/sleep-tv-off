@@ -10,12 +10,9 @@ import android.os.PowerManager
 
 /** Führt das Ausschalten aus und schreibt das Ergebnis ins Protokoll. Blockiert. */
 object TvOff {
-    fun execute(context: Context, reason: String): SamsungTv.Result {
-        val result = SamsungTv.turnOff(Prefs.tvIp(context), Prefs.tvToken(context))
-        // Manche Modelle vergeben bei jeder Verbindung ein neues Token.
-        if (result.ok && !result.token.isNullOrBlank() && result.token != Prefs.tvToken(context)) {
-            Prefs.setPairing(context, result.token)
-        }
+    /** @param force true beim Knopf "Jetzt aus", siehe [HisenseTv.turnOff] */
+    fun execute(context: Context, reason: String, force: Boolean = false): HisenseTv.Result {
+        val result = HisenseTv.turnOff(context, Prefs.tvIp(context), force)
         Prefs.log(context, "$reason: ${result.message}")
         return result
     }

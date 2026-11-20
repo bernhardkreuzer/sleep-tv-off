@@ -20,6 +20,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.wearable.Wearable
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -147,11 +148,51 @@ class MainActivity : AppCompatActivity() {
             return
         }
         btnPair.isEnabled = false
-        toast("Bitte am Fernseher \"Zulassen\" wählen")
         val app = applicationContext
         io.execute {
-            val result = SamsungTv.pair(ip)
-            if (result.ok) Prefs.setPairing(app, result.token)
+            val (session, result) = HisenseTv.beginPairing(app, ip)
+            runOnUiThread {
+                if (session != null && !isFinishing) {
+                    askPin(session)
+                } else {
+                    // Fehler oder App inzwischen geschlossen
+                    if (session != null) io.execute { session.close() }
+                    Prefs.log(app, "Kopplung: ${result.message}")
+                    btnPair.isEnabled = true
+                    toast(result.message)
+                    refresh()
+                }
+            }
+        }
+    }
+
+    /** Der Fernseher zeigt jetzt eine PIN an, die hier eingegeben wird. */
+    private fun askPin(session: HisenseTv.PairingSession) {
+        val view = layoutInflater.inflate(R.layout.dialog_pin, null)
+        val editPin = view.findViewById<EditText>(R.id.editPin)
+        AlertDialog.Builder(this)
+            .setTitle("PIN vom Fernseher")
+            .setMessage("Der Fernseher zeigt jetzt eine PIN an. Bitte hier eingeben.")
+            .setView(view)
+            .setCancelable(false)
+            .setPositiveButton("Koppeln") { _, _ ->
+                finishPairing(session, editPin.text.toString())
+            }
+            .setNegativeButton("Abbrechen") { _, _ ->
+                io.execute { session.close() }
+                btnPair.isEnabled = true
+            }
+            .show()
+    }
+
+    private fun finishPairing(session: HisenseTv.PairingSession, pin: String) {
+        val app = applicationContext
+        io.execute {
+            val result = try {
+                session.submitPin(pin)
+            } finally {
+                session.close()
+            }
             Prefs.log(app, "Kopplung: ${result.message}")
             runOnUiThread {
                 btnPair.isEnabled = true
@@ -166,7 +207,7 @@ class MainActivity : AppCompatActivity() {
         btnTestOff.isEnabled = false
         val app = applicationContext
         io.execute {
-            val result = TvOff.execute(app, "Manueller Test")
+            val result = TvOff.execute(app, "Manueller Test", force = true)
             runOnUiThread {
                 btnTestOff.isEnabled = true
                 toast(result.message)
