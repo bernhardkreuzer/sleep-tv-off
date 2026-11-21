@@ -31,6 +31,7 @@ class SleepListenerService : WearableListenerService() {
         when (state) {
             STATE_ASLEEP -> onAsleep(changedAt, tag)
             STATE_AWAKE -> {
+                if (SleepTimerLogic.isStaleAwake(changedAt, Prefs.lastSleepStart(this))) return
                 if (TimerScheduler.cancel(this)) {
                     Prefs.log(this, "Wieder wach$tag: Timer abgebrochen")
                 }

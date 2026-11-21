@@ -33,7 +33,13 @@ object SamsungTv {
     private const val APP_NAME = "SleepTvOff"
     private const val KEY_POWER = "KEY_POWER"
 
-    data class Result(val ok: Boolean, val message: String, val token: String? = null)
+    data class Result(
+        val ok: Boolean,
+        val message: String,
+        val token: String? = null,
+        /** Der Fernseher hat auf die Statusabfrage nicht geantwortet. */
+        val unreachable: Boolean = false
+    )
 
     enum class Power { ON, STANDBY, UNREACHABLE }
 
@@ -98,7 +104,8 @@ object SamsungTv {
     fun turnOff(ip: String, token: String): Result {
         if (ip.isBlank()) return Result(false, "Keine IP-Adresse eingetragen")
         return when (powerState(ip)) {
-            Power.UNREACHABLE -> Result(true, "Fernseher nicht erreichbar, vermutlich schon aus")
+            Power.UNREACHABLE ->
+                Result(true, "Fernseher nicht erreichbar, vermutlich schon aus", unreachable = true)
             Power.STANDBY -> Result(true, "Fernseher war schon aus")
             Power.ON -> {
                 val result = session(ip, token.ifBlank { null }, KEY_POWER, waitSec = 5)

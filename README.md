@@ -39,7 +39,9 @@ Wichtig: Beide Apps müssen vom selben Rechner gebaut sein (gleiche Signatur) un
 - Bei sehr kurzen Wartezeiten (1 bis 10 Minuten) ist die Zeit beim Eintreffen der Meldung meist schon vorbei. Der Fernseher geht dann aus, sobald die Watch das Einschlafen meldet.
 - Kommt die Meldung mehr als 60 Minuten nach dem geplanten Ausschaltzeitpunkt an (z. B. erst am Morgen), passiert nichts. Der Wert steht in `SleepTimerLogic.MAX_LATE_MIN`.
 - Der Aus-Befehl ist bei Samsung ein Umschalter (`KEY_POWER`). Die App fragt deshalb vorher den Status ab und sendet nur, wenn der Fernseher wirklich an ist.
-- Das Handy muss nachts im selben WLAN wie der Fernseher sein.
+- Das Handy muss nachts im selben WLAN wie der Fernseher sein. Ist es beim Ausschalten in gar keinem WLAN, steht im Protokoll "Handy ist nicht im WLAN" statt "vermutlich schon aus".
+- Ein verspätet nachgeliefertes "wach" von vor dem Einschlafen bricht den Timer nicht ab.
+- Ein laufender Timer übersteht einen Neustart des Handys.
 - Nach einem Neustart der Watch meldet sich die App selbst wieder an. Falls nicht: Watch-App einmal öffnen.
 - Fragt der Fernseher bei jedem Ausschalten erneut nach Erlaubnis: am TV unter Einstellungen → Verbindung → Externe Geräteverwaltung → Geräteverbindungsmanager die Zugriffsbenachrichtigung auf "Nur beim ersten Mal" stellen (Menüpfad je nach Modell leicht anders).
 

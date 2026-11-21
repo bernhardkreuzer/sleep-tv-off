@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Exakter Alarm, damit der Timer auch im Doze-Modus pünktlich feuert. -->
     <uses-permission
@@ -42,5 +44,14 @@
         <receiver
             android:name=".TvOffReceiver"
             android:exported="false" />
+
+        <!-- Stellt einen laufenden Timer nach einem Neustart des Handys wieder her. -->
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

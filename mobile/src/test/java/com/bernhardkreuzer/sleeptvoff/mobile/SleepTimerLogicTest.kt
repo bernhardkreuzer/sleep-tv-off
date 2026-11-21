@@ -2,6 +2,8 @@ package com.bernhardkreuzer.sleeptvoff.mobile
 
 import com.bernhardkreuzer.sleeptvoff.mobile.SleepTimerLogic.Decision
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SleepTimerLogicTest {
@@ -38,5 +40,22 @@ class SleepTimerLogicTest {
     @Test
     fun watchUhrGehtVor_nieLaengerAlsVerzoegerung() {
         assertEquals(Decision.Schedule(now + 20 * min), SleepTimerLogic.decide(now + 5 * min, now, 20))
+    }
+
+    @Test
+    fun wachNachDemEinschlafen_brichtTimerAb() {
+        assertFalse(SleepTimerLogic.isStaleAwake(now + 3 * min, now))
+        assertFalse(SleepTimerLogic.isStaleAwake(now, now))
+    }
+
+    @Test
+    fun wachVorDemEinschlafen_wirdIgnoriert() {
+        // Verspätet nachgeliefertes "wach" von vor dem Einschlafen.
+        assertTrue(SleepTimerLogic.isStaleAwake(now - 30 * min, now))
+    }
+
+    @Test
+    fun wachOhneVorherigesEinschlafen_istNichtVeraltet() {
+        assertFalse(SleepTimerLogic.isStaleAwake(now, 0L))
     }
 }

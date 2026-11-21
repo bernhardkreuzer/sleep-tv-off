@@ -38,4 +38,12 @@ object SleepTimerLogic {
             else -> Decision.TooLate
         }
     }
+
+    /**
+     * Die Watch liefert Zustandswechsel gebündelt, die Reihenfolge ist nicht
+     * garantiert. Ein "wach", das vor dem zuletzt verarbeiteten Einschlafen
+     * liegt, darf dessen Timer nicht abbrechen.
+     */
+    fun isStaleAwake(awakeAtMs: Long, lastSleepStartMs: Long): Boolean =
+        awakeAtMs < lastSleepStartMs
 }

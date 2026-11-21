@@ -5,19 +5,40 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.PowerManager
 
 /** Führt das Ausschalten aus und schreibt das Ergebnis ins Protokoll. Blockiert. */
 object TvOff {
     fun execute(context: Context, reason: String): SamsungTv.Result {
-        val result = SamsungTv.turnOff(Prefs.tvIp(context), Prefs.tvToken(context))
+        var result = SamsungTv.turnOff(Prefs.tvIp(context), Prefs.tvToken(context))
+        // Ohne WLAN ist "nicht erreichbar" kein Hinweis darauf, dass der TV aus ist.
+        if (result.unreachable && !onLocalNetwork(context)) {
+            result = SamsungTv.Result(
+                false,
+                "Handy ist nicht im WLAN, Fernseher konnte nicht geprüft werden",
+                unreachable = true
+            )
+        }
         // Manche Modelle vergeben bei jeder Verbindung ein neues Token.
         if (result.ok && !result.token.isNullOrBlank() && result.token != Prefs.tvToken(context)) {
             Prefs.setPairing(context, result.token)
         }
         Prefs.log(context, "$reason: ${result.message}")
         return result
+    }
+
+    /** Hängt das Handy an einem WLAN oder LAN? Ein VPN darüber zählt mit. */
+    private fun onLocalNetwork(context: Context): Boolean {
+        val cm = context.getSystemService(ConnectivityManager::class.java)
+        @Suppress("DEPRECATION")
+        return cm.allNetworks.any { network ->
+            val caps = cm.getNetworkCapabilities(network) ?: return@any false
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+        }
     }
 }
 
@@ -52,6 +73,19 @@ object TimerScheduler {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+    }
+}
+
+/** Alarme überleben keinen Neustart des Handys: laufenden Timer neu stellen. */
+class BootReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        val pendingAt = Prefs.pendingAt(context)
+        when {
+            pendingAt == 0L -> Unit
+            pendingAt > System.currentTimeMillis() -> TimerScheduler.schedule(context, pendingAt)
+            else -> Prefs.setPendingAt(context, 0L)
+        }
     }
 }
 
